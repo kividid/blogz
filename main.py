@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request
+from flask import Flask, redirect, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
 import datetime
 
@@ -6,6 +6,7 @@ app = Flask(__name__)
 app.config['DEBUG'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://build-a-blog:Or.r0cks@localhost:8889/build-a-blog'
 app.config['SQLALCHEMY_ECHO'] = True
+app.secret_key = 'j5%NNapT*F5S60FrF1tP'
 
 db = SQLAlchemy(app)
 
@@ -25,12 +26,18 @@ class Blog(db.Model):
         self.content = content
 
     def __repr__(self):
-        return '<Post %r>' % self.title
+        return '<Post {0}, {1}>'.format(self.title, self.id)
 
 
 @app.route('/blog')
 def blog():
-    blogs = Blog.query.all()
+    args = request.args
+    if 'id' in args:
+        id = args['id']
+        post = Blog.query.get(id)
+        return render_template('singleblog.html', title=post.title, post=post)
+
+    blogs = Blog.query.order_by(Blog.post_date.desc()).all()
 
     return render_template('blog.html', title='Blog', blogs=blogs)
 
@@ -38,11 +45,23 @@ def blog():
 @app.route('/newpost', methods=['GET', 'POST'])
 def newpost():
 
-    if request.method == 'POST':
-        
-        return redirect('blog.html')
+    title = ''
+    content = ''
 
-    return render_template('newpost.html', title='Create New Post')
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        if not title or not content:
+            flash('Please enter a title and some content for the blog post!', 'error')
+        else:
+            post = Blog(title, content)
+            db.session.add(post)
+            db.session.commit()
+
+            return redirect('/blog?id={}'.format(post.id))
+
+    return render_template('newpost.html', title='Create New Post', post_title=title, post_content=content)
 
 
 app.run()

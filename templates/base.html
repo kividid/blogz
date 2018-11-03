@@ -5,8 +5,27 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>{{title}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static',filename='styles/main.css') }}" />
 </head>
+<header>
+    <ul class="nav">
+        <li class="nav">
+            <a href="/blog">Blog Posts</a>
+        </li>
+        <li class="nav">
+            <a href="/newpost">New Post</a>
+        </li>
+    </ul>    
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+</header>
 <body>
 
     {% block content %}

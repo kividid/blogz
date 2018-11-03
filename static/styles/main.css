@@ -1,0 +1,48 @@
+p, h1, h2, h6, label, textarea {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+h6 {
+    color: grey;
+}
+
+h6 {
+    margin-top: -15px;
+}
+
+h2 {
+    margin-top: -5px;
+}
+
+.nav {
+    display: inline-block;
+}
+
+.nav li a {
+    display: inline-block;
+    background-color: grey;
+    color: white;
+    padding: 5px;
+    font-family: Arial, Helvetica, sans-serif;
+    text-decoration: none;
+}
+
+.post{
+    max-width: 600px;
+    background: #ededed;
+    padding: 20px;
+    border-bottom: 1px;
+    border-color: white;
+    margin-bottom: 1px;
+}
+
+.postbox {
+    max-width: 600px;
+    max-height: 400px;
+}
+
+.flashes {
+    font-family: Arial, Helvetica, sans-serif;
+    color: grey;
+    list-style-type: none;
+}
