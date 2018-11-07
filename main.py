@@ -1,7 +1,8 @@
-from flask import Flask, redirect, render_template, request, flash
+from flask import Flask, redirect, render_template, request, flash, session
 from flask_sqlalchemy import SQLAlchemy
 import datetime
 from passlib.hash import pbkdf2_sha256
+import re
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
@@ -47,6 +48,13 @@ class User(db.Model):
         return '<User {0}>'.format(self.username)
 
 
+@app.before_request
+def require_login():
+    allowed = ['signup', 'login']
+    if not ('user' in session or request.endpoint in allowed):
+        return redirect("/login")
+
+
 @app.route('/blog')
 def blog():
     args = request.args
@@ -73,7 +81,8 @@ def newpost():
         if not title or not content:
             flash('Please enter a title and some content for the blog post!', 'error')
         else:
-            post = Blog(title, content)
+            user = User.query.filter_by(username=session['user']).first()
+            post = Blog(title, content, user.id)
             db.session.add(post)
             db.session.commit()
 
@@ -98,14 +107,19 @@ def signup():
         if not username:
             flash('Please enter a user name')
             error = True
+        elif len(username) < 3:
+            flash('Username must be at least three characters')
         if not password:
             flash('Please enter a password')
+            error = True
+        elif len(password) < 3:
+            flash('Password must be at least three characters')
             error = True
         elif not password == verify:
             flash('Passwords do not match')
             error = True
-        if not email:
-            flash('Please enter an email')
+        if not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+            flash('Please enter a valid email')
             error = True
 
         existing = User.query.filter_by(username=username).first()
@@ -123,13 +137,41 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
 
-    return render_template('signup.html')
+        session['user'] = username
 
+        return redirect('/newpost')
+
+    return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
 
-    return render_template('login.html')
+    username = ''
+
+    if request.method == 'POST':
+        username = request.form['user']
+        password = request.form['pass']
+
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            flash('User does noe exist')
+        else:
+            hash = user.password_hash
+
+            if not pbkdf2_sha256.verify(password, hash):
+                flash('Incorrect password')
+            else:
+                session['user'] = username
+                return redirect('/newpost')
+
+    return render_template('login.html', username=username)
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
 
 
 @app.route('/', methods=['GET', 'POST'])
