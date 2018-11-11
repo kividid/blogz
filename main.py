@@ -50,18 +50,26 @@ class User(db.Model):
 
 @app.before_request
 def require_login():
-    allowed = ['signup', 'login']
+    allowed = ['signup', 'login', 'blog', 'index']
     if not ('user' in session or request.endpoint in allowed):
-        return redirect("/login")
+        return redirect("/blog")
 
 
 @app.route('/blog')
 def blog():
     args = request.args
+
     if 'id' in args:
         id = args['id']
         post = Blog.query.get(id)
         return render_template('singleblog.html', title=post.title, post=post)
+
+    if 'user' in args:
+        user_id = args['user']
+        user = User.query.get(user_id)
+        title = 'Posts by {}'.format(user.username)
+        posts = Blog.query.order_by(Blog.post_date.desc()).filter_by(author_id=user_id).all()
+        return render_template('singleUser.html', title=title, posts=posts, user=user)
 
     blogs = Blog.query.order_by(Blog.post_date.desc()).all()
 
@@ -171,13 +179,15 @@ def login():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect('/login')
+    return redirect('/blog')
 
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
 
-    return render_template('index.html')
+    users = User.query.all()
+
+    return render_template('index.html', users=users)
 
 
 if __name__ == '__main__':
