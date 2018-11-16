@@ -52,7 +52,7 @@ class User(db.Model):
 def require_login():
     allowed = ['signup', 'login', 'blog', 'index']
     if not ('user' in session or request.endpoint in allowed):
-        return redirect("/signup")
+        return redirect("/login")
 
 
 @app.route('/blog')
